@@ -100,6 +100,97 @@ let store = (config) => {
         });
       });
     },
+    'reconf': function(oldGroup, callback) {
+      callback = callback || function() {};
+
+      distribution[context.gid].store.get(null, (e, v) => {
+        if (Object.keys(e).length > 0) {
+          return callback(e, null);
+        }
+
+        let allKeys = v;
+        distribution.local.groups.get(context.gid, (e, v) => {
+          if (e) {
+            return callback(e, null);
+          }
+
+          let newGroup = v;
+          let toRelocate = {};
+          for (let i = 0; i < allKeys.length; i++) {
+            key = allKeys[i];
+
+            let oldNode = oldGroup[context.hash(util.id.getID(key),
+                Object.keys(oldGroup))];
+            let newNode = newGroup[context.hash(util.id.getID(key),
+                Object.keys(newGroup))];
+
+            if (oldNode !== newNode) {
+              toRelocate[key] = {
+                oldNode: oldNode,
+                newNode: newNode,
+              };
+            }
+          }
+
+          let i = 0;
+          const loopingCaller = (err, value) => {
+            let key = Object.keys(toRelocate)[i];
+            let oldNode = toRelocate[key].oldNode;
+            let newNode = toRelocate[key].newNode;
+
+            key = {
+              key: key,
+              gid: context.gid,
+            };
+
+            let oldPayload = [key];
+            let getRemote = {
+              node: oldNode,
+              service: 'store',
+              method: 'get',
+            };
+            let delRemote = {
+              node: oldNode,
+              service: 'store',
+              method: 'del',
+            };
+
+            distribution.local.comm.send(oldPayload, getRemote, (e, v) => {
+              if (e) {
+                return callback(e, null);
+              }
+              distribution.local.comm.send(oldPayload, delRemote, (e, v) => {
+                if (e) {
+                  return callback(e, null);
+                }
+
+                let newPayload = [v, key];
+                let putRemote = {
+                  node: newNode,
+                  service: 'store',
+                  method: 'put',
+                };
+
+                distribution.local.comm.send(newPayload, putRemote, (e, v) => {
+                  if (e) {
+                    return callback(e, null);
+                  }
+
+                  i++;
+                  if (i < Object.keys(toRelocate).length) {
+                    loopingCaller(null, null);
+                  } else {
+                    callback(null, 'reconf complete');
+                  }
+                });
+              });
+            });
+          };
+
+          loopingCaller(null, null);
+        });
+      });
+    },
   };
 };
 

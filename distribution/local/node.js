@@ -92,11 +92,6 @@ const start = function(onStart) {
       body = serialization.deserialize(body);
       let args = body;
 
-      if (service == 'mem') {
-        console.log('MEMFUCK');
-        console.log(service);
-      }
-
       /* Here, you can handle the service requests. */
 
       // Write some code...
