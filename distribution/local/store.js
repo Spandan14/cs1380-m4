@@ -29,9 +29,15 @@ store.get = function(key, callback) {
   }
 
   if (!key.key) {
-    let allKeys = fs.readdirSync(path.join(__dirname, '../../store/',
-        id.getNID(global.nodeConfig), '/', key.gid));
-    callback(null, allKeys);
+    let folderPath = path.join(__dirname, '../../store/',
+        id.getNID(global.nodeConfig), '/', key.gid);
+    fs.readdir(folderPath, function(err, files) {
+      if (err) {
+        callback(null, {});
+      } else {
+        callback(null, files);
+      }
+    });
     return;
   }
 
