@@ -64,10 +64,14 @@ store.put = function(value, key, callback) {
     key.key = id.getID(value);
   }
 
-  let nodeDir = path.join(__dirname, '../../store/' +
-      id.getNID(global.nodeConfig));
+  let storeDir = path.join(__dirname, '../../store/');
+  let nodeDir = storeDir + id.getNID(global.nodeConfig);
   let fileDir = nodeDir + '/' + key.gid;
   let filePath = fileDir + '/' + key.key;
+
+  if (!fs.existsSync(storeDir)) {
+    fs.mkdirSync(storeDir);
+  }
 
   if (!fs.existsSync(nodeDir)) {
     fs.mkdirSync(nodeDir);
