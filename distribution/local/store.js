@@ -21,15 +21,22 @@ let store = {};
 store.get = function(key, callback) {
   callback = callback || function() {};
 
-  if (!key) {
+  if (typeof key !== 'object' || !key) {
+    key = {
+      key: key,
+      gid: 'local',
+    };
+  }
+
+  if (!key.key) {
     let allKeys = fs.readdirSync(path.join(__dirname, '../../store/',
-        id.getNID(global.nodeConfig)));
+        id.getNID(global.nodeConfig), '/', key.gid));
     callback(null, allKeys);
     return;
   }
 
   let filePath = path.join(__dirname, '../../store/',
-      id.getNID(global.nodeConfig) + '/' + key);
+      id.getNID(global.nodeConfig) + '/' + key.gid + '/' + key.key);
   fs.readFile(filePath, 'utf8', function(err, data) {
     if (err) {
       if (err.code === 'ENOENT') {
@@ -46,13 +53,25 @@ store.get = function(key, callback) {
 store.put = function(value, key, callback) {
   callback = callback || function() {};
 
-  if (!key) {
-    key = id.getID(value);
+  if (typeof key !== 'object' || !key) {
+    key = {
+      key: key,
+      gid: 'local',
+    };
   }
 
-  let fileDir = path.join(__dirname, '../../store/' +
+  if (!key.key) {
+    key.key = id.getID(value);
+  }
+
+  let nodeDir = path.join(__dirname, '../../store/' +
       id.getNID(global.nodeConfig));
-  let filePath = fileDir + '/' + key;
+  let fileDir = nodeDir + '/' + key.gid;
+  let filePath = fileDir + '/' + key.key;
+
+  if (!fs.existsSync(nodeDir)) {
+    fs.mkdirSync(nodeDir);
+  }
 
   if (!fs.existsSync(fileDir)) {
     fs.mkdirSync(fileDir);
@@ -74,8 +93,15 @@ store.put = function(value, key, callback) {
 store.del = function(key, callback) {
   callback = callback || function() {};
 
+  if (typeof key !== 'object' || !key) {
+    key = {
+      key: key,
+      gid: 'local',
+    };
+  }
+
   let filePath = path.join(__dirname, '../../store/',
-      id.getNID(global.nodeConfig) + '/' + key);
+      id.getNID(global.nodeConfig) + '/' + key.gid + '/' + key.key);
   store.get(key, function(err, value) {
     if (err) {
       callback(err, null);
