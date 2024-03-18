@@ -103,7 +103,7 @@ let mem = (config) => {
     'reconf': function(oldGroup, callback) {
       callback = callback || function() {};
 
-      distribution[context.gid].store.get(null, (e, v) => {
+      distribution[context.gid].mem.get(null, (e, v) => {
         if (Object.keys(e).length > 0) {
           return callback(e, null);
         }
