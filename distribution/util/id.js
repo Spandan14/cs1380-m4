@@ -32,10 +32,29 @@ function naiveHash(kid, nids) {
 }
 
 function consistentHash(kid, nids) {
+  let kidNum = idToNum(kid);
+  let nidNums = nids.map(idToNum);
+  nidNums.push(kidNum);
+
+  let mapping = {};
+  for (let i = 0; i < nids.length; i++) {
+    mapping[nidNums[i]] = nids[i];
+  }
+  mapping[kidNum] = kid;
+
+  nidNums.sort();
+
+  let index = nidNums.indexOf(kidNum);
+  return mapping[nidNums[(index + 1) % (nids.length + 1)]];
 }
 
 
 function rendezvousHash(kid, nids) {
+  let concatIDs = nids.map((nid) => kid + nid);
+  let hashNums = concatIDs.map((id) => idToNum(getID(id)));
+  let maxIndex = hashNums.indexOf(Math.max(...hashNums));
+
+  return nids[maxIndex];
 }
 
 module.exports = {
